@@ -1,4 +1,4 @@
-import { ApplicationIntegrationType, ChatInputCommandInteraction, Client, GuildBasedChannel, InteractionContextType, MessageMentions, PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
+import { ApplicationIntegrationType, ChatInputCommandInteraction, Client, GuildBasedChannel, InteractionContextType, PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
 import { channelIsInStaffCategory, getIdFromInput, handleWhoIsInteraction } from '../utils';
 
 export default {

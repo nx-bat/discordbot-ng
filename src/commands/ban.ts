@@ -1,4 +1,4 @@
-import { ApplicationIntegrationType, ChatInputCommandInteraction, Client, Guild, GuildMember, InteractionContextType, MessageMentions, PermissionFlagsBits, SlashCommandBuilder, time, TimestampStyles, User } from 'discord.js';
+import { ApplicationIntegrationType, ChatInputCommandInteraction, Client, Guild, GuildMember, InteractionContextType, PermissionFlagsBits, SlashCommandBuilder, time, TimestampStyles, User } from 'discord.js';
 import { Database } from '../shared/Database';
 import { AltData, comprehensiveAltLookupFromDiscord, deferInteraction, getIdFromInput } from '../utils';
 
