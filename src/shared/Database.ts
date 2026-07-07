@@ -132,7 +132,7 @@ export class Database {
 
       await Database.db.run(`
         INSERT INTO messages (id, id_hash, author_id, author_id_hash, author_name, channel_id, attachments, stickers, content) VALUES
-        (:id, :id_hash, :author_id, :author_name, :channel_id, :attachments, :stickers, :content)
+        (:id, :id_hash, :author_id, :author_id_hash, :author_name, :channel_id, :attachments, :stickers, :content)
       `, ...serializedMessage);
 
       return true;

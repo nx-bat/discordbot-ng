@@ -1,5 +1,12 @@
+import { existsSync, readFileSync } from 'fs';
 import { config } from '../config';
+import _https from 'https';
+import _http from 'http';
 import { E621Pool, E621Post, E621User, PostFlag, Record } from '../types';
+import path from 'path';
+
+const secure = config.E621_BASE_URL?.startsWith('https');
+const http = secure ? _https : _http;
 
 const BLACKLISTED_TAGS: string[] = [];
 const BLACKLISTED_NONSAFE_TAGS: string[] = ['young'];
@@ -11,6 +18,16 @@ const USER_AGENT = 'E621DiscordBot';
 
 export const SEARCH_LIMIT = 320;
 
+let agent: _https.Agent | _http.Agent = secure ? new _https.Agent() : new _http.Agent();
+if (secure && existsSync('./certs/cert.pem') && existsSync('./certs/cert.pem')) {
+  console.log('[E621 Requester] Initializing agent with certificates.');
+  agent = new _https.Agent({
+    cert: readFileSync(path.join(__dirname, '..', '..', 'certs', 'cert.pem'), { encoding: 'utf8' }),
+    key: readFileSync(path.join(__dirname, '..', '..', 'certs', 'priv.key'), { encoding: 'utf8' }),
+    rejectUnauthorized: false
+  });
+}
+
 async function request(path: string, query?: { [name: string]: string }): Promise<any> {
   const url = new URL(config.E621_BASE_URL!);
   url.pathname = path + '.json';
@@ -21,15 +38,43 @@ async function request(path: string, query?: { [name: string]: string }): Promis
     }
   }
 
-  const res = await fetch(url, {
-    headers: {
-      'User-Agent': USER_AGENT
-    }
+  return new Promise((resolve) => {
+    http.get(url, {
+      agent,
+      headers: {
+        'User-Agent': USER_AGENT,
+        'Accept': 'application/json'
+      }
+    }, (res) => {
+      if (res.statusCode! < 200 || res.statusCode! >= 300) {
+        console.error(`[E621 Requester] Received status code ${res.statusCode} while requesting: ${url}`);
+        res.resume();
+        return resolve(null);
+      }
+
+      res.setEncoding('utf8');
+
+      let data = '';
+
+      res.on('data', (d) => {
+        data += d;
+      });
+
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(data));
+        } catch (e) {
+          console.error('[E621 Requester] Error parsing JSON from:');
+          console.error(data);
+          resolve(null);
+        }
+      });
+    }).on('error', (e) => {
+      console.error('[E621 Requester] Error fetching:');
+      console.error(e);
+      resolve(null);
+    });
   });
-
-  if (!res.ok) return null;
-
-  return await res.json();
 }
 
 export async function getE621User(idOrName: string | number): Promise<E621User | null> {

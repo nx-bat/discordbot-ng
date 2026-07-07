@@ -8,3 +8,4 @@ services:
     volumes:
       - ./data:/app/data
       - ./sql:/app/sql
+      - ./certs:/app/certs

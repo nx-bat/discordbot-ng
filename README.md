@@ -34,6 +34,13 @@
 8. Enter the redis url of your e621ng instance. You may need to expose the port from docker manually in development enviornments. This can be done by adding a `ports` mapping to the `redis` service in e621ng's `docker-compose.yml` file. You should map `6379:6379`
 9. Enter your desired port number. It is recommended to leave this at `8000`, if you select anything different you will need to map the correct port in `docker-compose.yml`
 
+#### Mutual TLS
+This is purely for documentation purposes. E621 and this bot on the e621 discord server utilize mTLS to allow the bot to securely ensure that these requests are coming from the bot to allow it to work during DDoS attacks without issue.
+
+In order to enable this, first create a `certs` directory in the root directory (as in next to the `data` directory). Once this is done, go to cloudflare settings > SSL/TLS > Client Certificates. Click `Add Certificate` in the top right. Follow the directions and use `PEM` key format. Create a `cert.pem` file under `certs` and paste the contents of the `Certificate` into it. Then create a `priv.key` file under `certs` and paste the contents of `Private Key` into it. Continue the setup on cloudflare.
+
+When done properly the first log the bot will print on start should be `[E621 Requester] Initializing agent with certificates.`
+
 ### Installing dependencies
 Run `npm i` to install all node dependencies. This is required to start the bot.
 
