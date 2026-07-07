@@ -173,7 +173,7 @@ export class Database {
   }
 
   static async purgeMessagesFrom(id: string) {
-    await Database.db.run('DELETE from messages WHERE ');
+    await Database.db.run('DELETE from messages WHERE author_id_hash = ?', Encrypter.hash(id));
   }
 
   //#endregion
