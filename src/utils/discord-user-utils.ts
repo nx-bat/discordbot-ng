@@ -1,4 +1,4 @@
-import { Client, Guild, User } from 'discord.js';
+import { Client, Guild, MessageMentions, User } from 'discord.js';
 import { Database, PrivateHelpTicketStatus } from '../shared/Database';
 
 export async function resolveUser(client: Client, value: string, guild: Guild | null = null): Promise<User | null | undefined> {
@@ -25,6 +25,12 @@ export async function resolveUser(client: Client, value: string, guild: Guild | 
   }
 
   return user;
+}
+
+export function getIdFromInput(input: string): string {
+  const matches = new RegExp(MessageMentions.UsersPattern).exec(input);
+
+  return matches ? matches.groups!.id : input;
 }
 
 export async function canOpenPrivateHelpTicket(id: string): Promise<boolean> {

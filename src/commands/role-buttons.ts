@@ -8,7 +8,7 @@ export default {
     .setDescription('Manage role buttons.')
     .setIntegrationTypes(ApplicationIntegrationType.GuildInstall)
     .setContexts(InteractionContextType.Guild)
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
     .addSubcommand(subcommand =>
       subcommand
         .setName('create')

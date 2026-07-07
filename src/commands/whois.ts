@@ -1,7 +1,5 @@
 import { ApplicationIntegrationType, ChatInputCommandInteraction, Client, GuildBasedChannel, InteractionContextType, MessageMentions, PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
-import { channelIsInStaffCategory, handleWhoIsInteraction } from '../utils';
-
-const mentionRegex = new RegExp(MessageMentions.UsersPattern);
+import { channelIsInStaffCategory, getIdFromInput, handleWhoIsInteraction } from '../utils';
 
 export default {
   name: 'whois',
@@ -20,10 +18,7 @@ export default {
   handler: async function (client: Client, interaction: ChatInputCommandInteraction) {
     const input = interaction.options.getString('user', true);
 
-    const matches = mentionRegex.exec(input);
-    mentionRegex.lastIndex = 0;
-
-    const valueToUse = matches ? matches.groups!.id : input;
+    const valueToUse = getIdFromInput(input);
 
     handleWhoIsInteraction(interaction, valueToUse, !(await channelIsInStaffCategory(interaction.channel as GuildBasedChannel)));
   }

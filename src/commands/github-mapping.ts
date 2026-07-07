@@ -1,7 +1,6 @@
 import { ApplicationIntegrationType, ChatInputCommandInteraction, Client, InteractionContextType, MessageFlags, MessageMentions, PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
 import { Database } from '../shared/Database';
-
-const mentionRegex = new RegExp(MessageMentions.UsersPattern);
+import { getIdFromInput } from '../utils';
 
 export default {
   name: 'github-mapping',
@@ -52,10 +51,7 @@ export default {
     if (subcommand == 'add') {
       const discordUserInput = interaction.options.getString('discord-user', true);
 
-      const matches = mentionRegex.exec(discordUserInput);
-      mentionRegex.lastIndex = 0;
-
-      const idToUse = matches ? matches.groups!.id : discordUserInput;
+      const idToUse = getIdFromInput(discordUserInput);
 
       const githubName = interaction.options.getString('github-name', true);
 
@@ -71,10 +67,7 @@ export default {
     } else if (subcommand == 'remove') {
       const discordUserInput = interaction.options.getString('discord-user', true);
 
-      const matches = mentionRegex.exec(discordUserInput);
-      mentionRegex.lastIndex = 0;
-
-      const idToUse = matches ? matches.groups!.id : discordUserInput;
+      const idToUse = getIdFromInput(discordUserInput);
 
       Database.removeGithubUserMapping(idToUse);
       return interaction.editReply('Mapping removed.');

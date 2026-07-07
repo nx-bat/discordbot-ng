@@ -1,9 +1,7 @@
 import { ApplicationIntegrationType, ChatInputCommandInteraction, Client, InteractionContextType, MessageFlags, MessageMentions, PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
 import { config } from '../config';
 import { Database } from '../shared/Database';
-import { logCustomEvent, resolveUser } from '../utils';
-
-const mentionRegex = new RegExp(MessageMentions.UsersPattern);
+import { getIdFromInput, logCustomEvent, resolveUser } from '../utils';
 
 export default {
   name: 'link',
@@ -54,10 +52,7 @@ export default {
 
     const discordUserInput = interaction.options.getString('discord-user', true);
 
-    const matches = mentionRegex.exec(discordUserInput);
-    mentionRegex.lastIndex = 0;
-
-    const idToUse = matches ? matches.groups!.id : discordUserInput;
+    const idToUse = getIdFromInput(discordUserInput);
 
     const user = await resolveUser(client, idToUse, interaction.guild);
 

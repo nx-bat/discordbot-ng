@@ -1,9 +1,7 @@
 import { ApplicationIntegrationType, AutocompleteInteraction, ChatInputCommandInteraction, Client, InteractionContextType, MessageMentions, PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
 import { Database } from '../shared/Database';
-import { deferInteraction, logCustomEvent, resolveUser } from '../utils';
+import { deferInteraction, getIdFromInput, logCustomEvent, resolveUser } from '../utils';
 import { getNoteMessage } from '../utils/note-utils';
-
-const mentionRegex = new RegExp(MessageMentions.UsersPattern);
 
 export default {
   name: 'notes',
@@ -88,10 +86,7 @@ export default {
 
     const input = interaction.options.getString('user', true);
 
-    const matches = mentionRegex.exec(input);
-    mentionRegex.lastIndex = 0;
-
-    const idToUse = matches ? matches.groups!.id : input;
+    const idToUse = getIdFromInput(input);
 
     await deferInteraction(interaction);
 
@@ -215,10 +210,7 @@ export default {
   autoComplete: async function (client: Client, interaction: AutocompleteInteraction) {
     const input = interaction.options.getString('user', true);
 
-    const matches = mentionRegex.exec(input);
-    mentionRegex.lastIndex = 0;
-
-    const idToUse = matches ? matches.groups!.id : input;
+    const idToUse = getIdFromInput(input);
 
     if (!idToUse) return interaction.respond([]);
 
