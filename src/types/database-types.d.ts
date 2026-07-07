@@ -1,7 +1,8 @@
 export type LoggedMessage = {
   id: string
-  id_encrypted: string
+  id_hash: string
   author_id: string
+  author_id_hash: string
   author_name: string
   channel_id: string
   attachments: string

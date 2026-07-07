@@ -131,7 +131,7 @@ export class Database {
       const serializedMessage = serializeMessage(message);
 
       await Database.db.run(`
-        INSERT INTO messages (id, id_hash, author_id, author_name, channel_id, attachments, stickers, content) VALUES
+        INSERT INTO messages (id, id_hash, author_id, author_id_hash, author_name, channel_id, attachments, stickers, content) VALUES
         (:id, :id_hash, :author_id, :author_name, :channel_id, :attachments, :stickers, :content)
       `, ...serializedMessage);
 
@@ -170,6 +170,10 @@ export class Database {
 
   static async pruneOldMessages() {
     await Database.db.run('DELETE from messages WHERE datetime(timestamp) < datetime("now", "-28 days")');
+  }
+
+  static async purgeMessagesFrom(id: string) {
+    await Database.db.run('DELETE from messages WHERE ');
   }
 
   //#endregion
