@@ -10,7 +10,7 @@ export function serializeMessage(message: Message): string[] {
   const attachments = message.attachments.map(a => `${a.name}:${a.id}`);
   const stickers = message.stickers.map(s => `${s.name}:${s.id}`);
 
-  return [Encrypter.encrypt(message.id), Encrypter.hash(message.id), Encrypter.encrypt(message.author.id), Encrypter.encrypt(message.author.username), message.channelId, attachments.join(ARRAY_SEPARATOR), stickers.join(ARRAY_SEPARATOR), Encrypter.encrypt(message.content)];
+  return [Encrypter.encrypt(message.id), Encrypter.hash(message.id), Encrypter.encrypt(message.author.id), Encrypter.hash(message.author.id), Encrypter.encrypt(message.author.username), message.channelId, attachments.join(ARRAY_SEPARATOR), stickers.join(ARRAY_SEPARATOR), Encrypter.encrypt(message.content)];
 }
 
 export function deserializeMessage(loggedMessage: LoggedMessage): LoggedMessage {
