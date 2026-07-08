@@ -122,6 +122,12 @@ export default {
         .setName('github-release-channel')
         .setDescription('Set the github release channel.')
         .setRequired(false)
+    )
+    .addRoleOption(option =>
+      option
+        .setName('site-breaker-role')
+        .setDescription('Set the site breaker role.')
+        .setRequired(false)
     ),
   handler: async function (client: Client, interaction: ChatInputCommandInteraction) {
     if (!interaction.guildId) return; // This shouldn't occur, but TypeScript doesn't know that.
@@ -260,6 +266,12 @@ export default {
     if (githubReleaseChannel) {
       await Database.updateGuildSettings(interaction.guildId, 'github_release_channel', githubReleaseChannel.id);
       response.push(`**github_release_channel** has been set to ${githubReleaseChannel}.`);
+    }
+
+    const siteBreakerRole = interaction.options.getRole('site-breaker-role');
+    if (siteBreakerRole) {
+      await Database.updateGuildSettings(interaction.guildId, 'site_breaker_role_id', siteBreakerRole.id);
+      response.push(`**site_breaker_role_id** has been set to ${siteBreakerRole}.`);
     }
 
     if (response.length == 0) return interaction.editReply({ content: 'No settings have been modified.' });

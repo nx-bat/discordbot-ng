@@ -220,7 +220,7 @@ async function handleGithubRelease(client: Client, req: Request, res: Response):
 
   const date = new Date();
 
-  let message = `## [${months[date.getUTCMonth()]} ${date.getUTCDate()}, ${date.getUTCFullYear()}](<${data.release.html_url}>)\n\n${await fixPings(removeIssueLinks(data.release.body))}`;
+  let message = `## [${months[date.getUTCMonth()]} ${date.getUTCDate()}, ${date.getUTCFullYear()}](<${data.release.html_url}>)\n\n${settings.site_breaker_role_id ? `<@&${settings.site_breaker_role_id}>\n` : ''}${await fixPings(removeIssueLinks(data.release.body))}`;
 
   logDebug('Sending github release message');
 

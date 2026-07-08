@@ -28,8 +28,9 @@ export type GuildSettings = {
   link_skip_channels?: string
   github_release_channel?: string
   moderator_channel_id?: string
-  private_help_channel_id?: string,
+  private_help_channel_id?: string
   appeals_channel_id?: string
+  site_breaker_role_id?: string
 }
 
 type GuildSetting = Exclude<keyof GuildSettings, 'guild_id'>
