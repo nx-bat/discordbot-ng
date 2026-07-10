@@ -120,7 +120,7 @@ export type Ticket = {
   accused_id?: number
   target_id: number
   status: 'pending' | 'partial' | 'approved'
-  category: 'blip' | 'comment' | 'dmail' | 'forum' | 'pool' | 'post' | 'set' | 'user' | 'wiki'
+  category: 'blip' | 'comment' | 'dmail' | 'forum' | 'pool' | 'post' | 'set' | 'user' | 'wiki' | 'replacement'
   reason: string
 };
 

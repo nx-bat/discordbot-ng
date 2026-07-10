@@ -92,8 +92,10 @@ function getTitle(ticket: Ticket): string {
       return `User ${ticket.target}`;
     case 'wiki':
       return `Wiki page ${ticket.target}`;
+    case 'replacement':
+      return `Replacement by ${ticket.target}`;
     default:
-      return 'Uknown ticket category';
+      return 'Unknown ticket category';
   }
 }
 
