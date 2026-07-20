@@ -42,7 +42,7 @@ const regexTesters = [
   { runInDev: true, regex: recordIDRegex, handler: idHandler.bind(null, 'user_feedbacks') },
   { runInDev: true, regex: ticketIDRegex, handler: idHandler.bind(null, 'tickets') },
   { runInDev: true, regex: appealIDRegex, handler: idHandler.bind(null, 'appeals') },
-  { runInDev: true, regex: flagIDRegex, handler: idHandler.bind(null, 'flags') },
+  { runInDev: true, regex: flagIDRegex, handler: idHandler.bind(null, 'post_flags') },
   { runInDev: true, regex: artistIDRegex, handler: idHandler.bind(null, 'artists') },
   { runInDev: true, regex: wikiLinkRegex, handler: wikiPageHandler },
   { runInDev: true, regex: searchLinkRegex, handler: searchHandler },
