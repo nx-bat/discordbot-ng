@@ -28,7 +28,7 @@ if (secure && existsSync('./certs/cert.pem') && existsSync('./certs/cert.pem')) 
   });
 }
 
-async function request(path: string, query?: { [name: string]: string }): Promise<any> {
+async function request(path: string, query?: { [name: string]: string }, logErrors = true): Promise<any> {
   const url = new URL(config.E621_BASE_URL!);
   url.pathname = path + '.json';
 
@@ -47,7 +47,7 @@ async function request(path: string, query?: { [name: string]: string }): Promis
       }
     }, (res) => {
       if (res.statusCode! < 200 || res.statusCode! >= 300) {
-        console.error(`[E621 Requester] Received status code ${res.statusCode} while requesting: ${url}`);
+        if (logErrors) console.error(`[E621 Requester] Received status code ${res.statusCode} while requesting: ${url}`);
         res.resume();
         return resolve(null);
       }
@@ -64,14 +64,18 @@ async function request(path: string, query?: { [name: string]: string }): Promis
         try {
           resolve(JSON.parse(data));
         } catch (e) {
-          console.error('[E621 Requester] Error parsing JSON from:');
-          console.error(data);
+          if (logErrors) {
+            console.error('[E621 Requester] Error parsing JSON from:');
+            console.error(data);
+          }
           resolve(null);
         }
       });
     }).on('error', (e) => {
-      console.error('[E621 Requester] Error fetching:');
-      console.error(e);
+      if (logErrors) {
+        console.error('[E621 Requester] Error fetching:');
+        console.error(e);
+      }
       resolve(null);
     });
   });
@@ -89,8 +93,8 @@ export async function getManyE621Posts(ids: string[] | number[]): Promise<E621Po
   return (await request('/posts', { v2: 'true', tags: `id:${ids.join(',')}` })) as E621Post[] ?? [];
 }
 
-export async function getE621PostByMd5(md5: string): Promise<E621Post | null> {
-  return (await request('/posts', { md5, v2: 'true' })) as E621Post ?? null;
+export async function getE621PostByMd5(md5: string, logErrors = true): Promise<E621Post | null> {
+  return (await request('/posts', { md5, v2: 'true' }, logErrors)) as E621Post ?? null;
 }
 
 export async function getE621PostFlag(id: number): Promise<PostFlag | null> {

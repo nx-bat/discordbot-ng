@@ -98,7 +98,7 @@ export async function handleMessageCreate(message: Message) {
     if (md5s.length == 0) continue;
 
     for (const md5 of md5s) {
-      const post = await getE621PostByMd5(md5);
+      const post = await getE621PostByMd5(md5, false);
 
       if (post) {
         if (await blacklistIfNecessary(message, [post])) return;
@@ -377,7 +377,7 @@ async function imageHandler(message: Message, matchedGroups: RegExpExecArray[]):
 
   for (const match of matchedGroups) {
     try {
-      const post = await getE621PostByMd5(match[1]);
+      const post = await getE621PostByMd5(match[1], false);
       if (post) posts.push(post);
     } catch (e) {
       console.error(e);
