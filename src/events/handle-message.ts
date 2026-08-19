@@ -2,10 +2,9 @@ import { Message as DiscordMessage, GuildBasedChannel, GuildTextBasedChannel, Om
 import { config } from '../config';
 import { Database } from '../shared/Database';
 import { E621Pool, E621Post } from '../types';
-import { ALLOWED_MIMETYPES, appealIDRegex, artistIDRegex, blipIDRegex, calculateMD5FromURL, channelIgnoresLinks, channelIsInStaffCategory, channelIsSafe, commentIDRegex, flagIDRegex, forumTopicIDRegex, getE621Pool, getE621Post, getE621PostByMd5, getManyE621Posts, getPoolUrl, getPostUrl, isEdited, isInSpoilerTags, issueRegex, logDeletion, logEdit, poolIDRegex, PostAction, postIDRegex, prRegex, recordIDRegex, searchLinkRegex, setIDRegex, spoilerOrBlacklist, takedownIDRegex, ticketIDRegex, userIDRegex, wikiLinkRegex } from '../utils';
+import { ALLOWED_MIMETYPES, appealIDRegex, artistIDRegex, blipIDRegex, calculateMD5FromURL, channelIgnoresLinks, channelIsInStaffCategory, channelIsSafe, commentIDRegex, flagIDRegex, forumTopicIDRegex, getE621Pool, getE621Post, getE621PostByMd5, getManyE621Posts, getPoolUrl, getPostUrl, isEdited, isInSpoilerTags, issueRegex, logEdit, poolIDRegex, PostAction, postIDRegex, prRegex, recordIDRegex, searchLinkRegex, setIDRegex, spoilerOrBlacklist, takedownIDRegex, ticketIDRegex, userIDRegex, wikiLinkRegex } from '../utils';
 
 export type Message<InGuild extends boolean = boolean> = OmitPartialGroupDMChannel<DiscordMessage<InGuild>>;
-export type Partial = OmitPartialGroupDMChannel<PartialMessage>;
 
 // TODO: I don't know of any good way to not hardcode this regex for e621 links. So I've provided two that may need to have the port altered.
 const postRegex = new RegExp('!?https?://(?:.*@)?(?:e621|e926)\\.net/+posts/+([0-9]+)', 'gi');
@@ -174,23 +173,6 @@ export async function handleMessageUpdate(oldMessage: Message | PartialMessage, 
 
   if (responses.length > 0) {
     await newMessage.reply(responses.join('\n'));
-  }
-}
-
-export async function handleMessageDelete(message: Message | PartialMessage) {
-  const loggedMessage = await Database.getMessageWithRetry(message.id);
-
-  if (!loggedMessage) return;
-  else await Database.removeMessge(message.id);
-
-  if (message.inGuild()) {
-    await logDeletion(loggedMessage, message);
-  }
-}
-
-export async function handleBulkMessageDelete(messages: ReadonlyCollection<string, Message | Partial>, channel: GuildTextBasedChannel) {
-  for (const message of messages.values()) {
-    await handleMessageDelete(message);
   }
 }
 

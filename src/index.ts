@@ -1,6 +1,6 @@
 import { Client as DiscordClient, GatewayIntentBits, MessageFlags, Partials } from 'discord.js';
 import { config } from './config';
-import { handleAuditLogCreate, handleBanRemove, handleBulkMessageDelete, handleGuildCreate, handleMemberJoin, handleMessageCreate, handleMessageDelete, handleMessageUpdate, handleThreadCreate, handleVoiceStateUpdate } from './events';
+import { handleBulkMessageDelete, handleMessageCreate, handleMessageDelete, handleMessageUpdate } from './events';
 import { ScheduledTasks, Scheduler } from './scheduler';
 import { Database } from './shared/Database';
 import { openRedisClient } from './shared/RedisClient';
@@ -8,6 +8,8 @@ import { Handler } from './types';
 import { initIfNecessary, loadHandlersFrom, refreshCommands } from './utils';
 import { initializeWebserver } from './webserver';
 import { Encrypter } from './shared/Encrypter';
+
+import events from './events';
 
 let ready = false;
 
@@ -142,16 +144,13 @@ client.on('clientReady', async () => {
 
   ScheduledTasks.forEach(task => scheduler.add(task));
 
-  client.on('guildAuditLogEntryCreate', handleAuditLogCreate);
-  client.on('guildBanRemove', handleBanRemove);
-  client.on('guildCreate', handleGuildCreate);
-  client.on('guildMemberAdd', handleMemberJoin);
   client.on('messageCreate', handleMessageCreate);
-  client.on('messageDelete', handleMessageDelete);
-  client.on('messageDeleteBulk', handleBulkMessageDelete);
   client.on('messageUpdate', handleMessageUpdate);
-  client.on('threadCreate', handleThreadCreate);
-  client.on('voiceStateUpdate', handleVoiceStateUpdate);
+
+  events.forEach(event =>
+    //@ts-ignore TypeScript doesn't like my patchwork, neither would anyone else for that matter.
+    client.on(event.event, async (...args) => await event.handler(...args))
+  );
 
   ready = true;
   console.log('Ready');

@@ -1,7 +1,20 @@
-export * from './handle-audit-log-create';
-export * from './handle-ban-remove';
-export * from './handle-guild-create';
-export * from './handle-member-join';
+import auditLogCreate from './auditLogCreate';
+import guildBanRemove from './guild/guildBanRemove';
+import guildCreate from './guild/guildCreate';
+import guildMemberAdd from './guild/guildMemberAdd';
+import messageDelete from './message/messageDelete';
+import messageDeleteBulk from './message/messageDeleteBulk';
 export * from './handle-message';
-export * from './handle-thread-create';
-export * from './handle-voice-state-update';
+import threadCreate from './thread/threadCreate';
+import voiceStateUpdate from './voice/voiceStateUpdate';
+
+export default [
+  auditLogCreate,
+  guildBanRemove,
+  guildCreate,
+  guildMemberAdd,
+  messageDelete,
+  messageDeleteBulk,
+  threadCreate,
+  voiceStateUpdate
+];
