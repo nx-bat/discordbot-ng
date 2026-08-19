@@ -1,6 +1,6 @@
-import { Message } from '../events';
 import { Encrypter } from '../shared/Encrypter';
 import { LoggedMessage } from '../types';
+import { Message } from '../utils';
 
 export const ARRAY_SEPARATOR = '$';
 
