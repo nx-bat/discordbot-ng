@@ -1,4 +1,4 @@
-import auditLogCreate from './auditLogCreate';
+import auditLogCreate from './guild/guildAuditLogEntryCreate';
 import guildBanRemove from './guild/guildBanRemove';
 import guildCreate from './guild/guildCreate';
 import guildMemberAdd from './guild/guildMemberAdd';
