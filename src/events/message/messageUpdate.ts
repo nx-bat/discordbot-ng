@@ -1,7 +1,7 @@
-import { Message, PartialMessage } from 'discord.js';
+import { PartialMessage } from 'discord.js';
 import { config } from '../../config';
 import { Database } from '../../shared/Database';
-import { isEdited, logEdit } from '../../utils';
+import { isEdited, logEdit, Message, regexTesters, uniqueRegexMatches } from '../../utils';
 
 export default {
   event: 'messageUpdate',
