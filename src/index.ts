@@ -1,6 +1,6 @@
 import { Client as DiscordClient, GatewayIntentBits, MessageFlags, Partials } from 'discord.js';
 import { config } from './config';
-import { handleBulkMessageDelete, handleMessageCreate, handleMessageDelete, handleMessageUpdate } from './events';
+import events from './events';
 import { ScheduledTasks, Scheduler } from './scheduler';
 import { Database } from './shared/Database';
 import { openRedisClient } from './shared/RedisClient';
@@ -9,7 +9,6 @@ import { initIfNecessary, loadHandlersFrom, refreshCommands } from './utils';
 import { initializeWebserver } from './webserver';
 import { Encrypter } from './shared/Encrypter';
 
-import events from './events';
 
 let ready = false;
 
@@ -143,9 +142,6 @@ client.on('clientReady', async () => {
   await initializeWebserver(client);
 
   ScheduledTasks.forEach(task => scheduler.add(task));
-
-  client.on('messageCreate', handleMessageCreate);
-  client.on('messageUpdate', handleMessageUpdate);
 
   events.forEach(event =>
     //@ts-ignore TypeScript doesn't like my patchwork, neither would anyone else for that matter.

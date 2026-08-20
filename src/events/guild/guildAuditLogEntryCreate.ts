@@ -1,6 +1,6 @@
-import { APIEmbedField, APIRole, AuditLogEvent, EmbedBuilder, Guild, GuildAuditLogsEntry, RoleFlags, SnowflakeUtil } from 'discord.js';
+import { APIEmbedField, APIRole, AuditLogEvent, Guild, GuildAuditLogsEntry, RoleFlags } from 'discord.js';
 import { Database } from '../../shared/Database';
-import { formatChanges, formatExtras, formatSnowflake, getTargetType } from '../../utils';
+import { CreateDefaultEmbed, formatChanges, formatExtras, formatSnowflake, getTargetType } from '../../utils';
 
 const IGNORED_ACTIONS = [
   AuditLogEvent.MemberMove,
@@ -86,11 +86,12 @@ export default {
       });
     }
 
-    const embed = new EmbedBuilder()
-      .setTitle(Object.keys(AuditLogEvent)[Object.values(AuditLogEvent).indexOf(entry.action)])
-      .setTimestamp(Number(SnowflakeUtil.decode(entry.id).timestamp))
-      .addFields(...fields);
+    channel.send({
+      embeds: [{
+        ...CreateDefaultEmbed(guild.client),
 
-    channel.send({ embeds: [embed] });
+        fields: fields,
+      }]
+    });
   }
 };
