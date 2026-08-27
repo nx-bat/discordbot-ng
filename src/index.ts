@@ -1,7 +1,6 @@
 import { Client as DiscordClient, GatewayIntentBits, MessageFlags, Partials } from 'discord.js';
 import { config } from './config';
 import events from './events';
-import { ScheduledTasks, Scheduler } from './scheduler';
 import { Database } from './shared/Database';
 import { openRedisClient } from './shared/RedisClient';
 import { Handler } from './types';
@@ -31,8 +30,6 @@ const client = new DiscordClient({
     repliedUser: false
   }
 });
-
-const scheduler: Scheduler = new Scheduler(client);
 
 const commands: Handler[] = [];
 const contextMenus: Handler[] = [];
