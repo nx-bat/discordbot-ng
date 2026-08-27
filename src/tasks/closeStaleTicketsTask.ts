@@ -7,5 +7,5 @@ export default {
 
   handler: async (context: Client) => {
     await closeOldTickets(context);
-  }
-}
+  },
+};
