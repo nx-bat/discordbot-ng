@@ -17,6 +17,7 @@ export * from './file-utils';
 export * from './github-user-utils';
 export * from './interaction-utils';
 export * from './message-matcher-regex';
+export * from './message-handler-utils';
 export * from './message-utils';
 export * from './modal-utils';
 export * from './ms-to-human';

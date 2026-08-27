@@ -1,13 +1,10 @@
-import { Message as DiscordMessage, GuildBasedChannel, GuildTextBasedChannel, OmitPartialGroupDMChannel, PartialMessage, ReadonlyCollection, spoiler } from 'discord.js';
+import { Message as DiscordMessage, GuildBasedChannel, GuildTextBasedChannel, spoiler, OmitPartialGroupDMChannel } from 'discord.js';
 import { config } from '../config';
-import { Database } from '../shared/Database';
-import { E621Pool, E621Post } from '../types';
-import { ALLOWED_MIMETYPES, appealIDRegex, artistIDRegex, blipIDRegex, calculateMD5FromURL, channelIgnoresLinks, channelIsInStaffCategory, channelIsSafe, commentIDRegex, flagIDRegex, forumTopicIDRegex, getE621Pool, getE621Post, getE621PostByMd5, getManyE621Posts, getPoolUrl, getPostUrl, isEdited, isInSpoilerTags, issueRegex, logDeletion, logEdit, poolIDRegex, PostAction, postIDRegex, prRegex, recordIDRegex, searchLinkRegex, setIDRegex, spoilerOrBlacklist, takedownIDRegex, ticketIDRegex, userIDRegex, wikiLinkRegex } from '../utils';
+import { appealIDRegex, artistIDRegex, blipIDRegex, channelIgnoresLinks, channelIsInStaffCategory, channelIsSafe, commentIDRegex, flagIDRegex, forumTopicIDRegex, getE621Pool, getE621Post, getE621PostByMd5, getManyE621Posts, getPoolUrl, getPostUrl, isInSpoilerTags, issueRegex, poolIDRegex, PostAction, postIDRegex, prRegex, recordIDRegex, searchLinkRegex, setIDRegex, spoilerOrBlacklist, takedownIDRegex, ticketIDRegex, userIDRegex, wikiLinkRegex } from '.';
+import { E621Post, E621Pool } from '../types';
 
 export type Message<InGuild extends boolean = boolean> = OmitPartialGroupDMChannel<DiscordMessage<InGuild>>;
-export type Partial = OmitPartialGroupDMChannel<PartialMessage>;
 
-// TODO: I don't know of any good way to not hardcode this regex for e621 links. So I've provided two that may need to have the port altered.
 const postRegex = new RegExp('!?https?://(?:.*@)?(?:e621|e926)\\.net/+posts/+([0-9]+)', 'gi');
 const postShareRegex = new RegExp('!?https?://(?:.*@)?(?:e621|e926)\\.net/+p/+([a-z0-9]+)', 'gi');
 const imageRegex = new RegExp('!?https?://(?:.*@)?static[0-9]*\\.(?:e621|e926)\\.net/+data/+(?:sample/+|preview/+|)[\\da-f]{2}/+[\\da-f]{2}/+([\\da-f]{32})\\.[\\da-z]+', 'gi');
@@ -17,9 +14,9 @@ const postRegex_DEV = new RegExp('!?https?://(?:.*@)?localhost:3000/+posts/+([0-
 const imageRegex_DEV = new RegExp('!?https?://(?:.*@)?localhost:3000/+data/+(?:sample/+|preview/+|)[\\da-f]{2}/+[\\da-f]{2}/+([\\da-f]{32})\\.[\\da-z]+', 'gi');
 const poolRegex_DEV = new RegExp('!?https?://(?:.*@)?localhost:3000/+pools/+([0-9]+)', 'gi');
 
-const md5Regex = new RegExp('^([a-f0-9]{32}).(?:png|apng|jpg|jpeg|gif|webm|mp4)$', 'gi');
+export const md5Regex = new RegExp('^([a-f0-9]{32}).(?:png|apng|jpg|jpeg|gif|webm|mp4)$', 'gi');
 
-const regexTesters = [
+export const regexTesters = [
   { runInDev: false, regex: postRegex, handler: postHandler.bind(null, null) },
   {
     runInDev: false, regex: postShareRegex, handler: postHandler.bind(null, (idString: string) => {
@@ -51,148 +48,7 @@ const regexTesters = [
   { runInDev: true, regex: issueRegex, handler: githubIssueHandler },
 ];
 
-const uniqueRegexMatches = (g, i, a) => a.findIndex(v => v[1] == g[1]) == i;
-
-export async function handleMessageCreate(message: Message) {
-  if (message.author.bot) return;
-  if (message.inGuild()) await Database.putMessage(message);
-
-  const responses: string[] = [];
-
-  for (const test of regexTesters) {
-    if (config.DEV_MODE && !test.runInDev) continue;
-
-    const hasMatches = test.regex.test(message.content);
-    test.regex.lastIndex = 0;
-
-    if (hasMatches) {
-      const matches: RegExpExecArray[] = [];
-      let match: RegExpExecArray | null;
-
-      while ((match = test.regex.exec(message.content)) != null) {
-        matches.push(match);
-      }
-      test.regex.lastIndex = 0;
-
-      const response = await test.handler(message, matches.filter(uniqueRegexMatches));
-
-      if (response === false) return;
-
-      if (response !== true) responses.push(response as string);
-    }
-  }
-
-  for (const attachment of message.attachments.values()) {
-    const match = md5Regex.exec(attachment.name);
-    md5Regex.lastIndex = 0;
-
-    const md5s: string[] = [];
-
-    if (match) md5s.push(match[1]);
-    else if (ALLOWED_MIMETYPES.includes(attachment.contentType!)) {
-      const md5Data = await calculateMD5FromURL(attachment.url);
-      if (!md5Data) continue;
-      md5s.push(md5Data.correctedFileMD5, md5Data.originalFileMD5);
-    }
-
-    if (md5s.length == 0) continue;
-
-    for (const md5 of md5s) {
-      const post = await getE621PostByMd5(md5, false);
-
-      if (post) {
-        if (await blacklistIfNecessary(message, [post])) return;
-
-        responses.push(`<${getPostUrl(post)}>`);
-
-        continue;
-      }
-    }
-  }
-
-  if (responses.length > 0) {
-    await message.reply(responses.join('\n'));
-  }
-}
-
-export async function handleMessageUpdate(oldMessage: Message | PartialMessage, newMessage: Message) {
-  if (newMessage.author.bot) return;
-
-  const loggedMessage = await Database.getMessageWithRetry(newMessage.id);
-
-  if (!loggedMessage) {
-    if (newMessage.inGuild()) await Database.putMessage(newMessage);
-
-    return;
-  }
-
-  if (newMessage.inGuild() && isEdited(loggedMessage, newMessage)) {
-    await Database.putMessage(newMessage);
-    await logEdit(loggedMessage, newMessage);
-  }
-
-  if (loggedMessage.content == newMessage.content) return;
-
-  const responses: string[] = [];
-
-  for (const test of regexTesters) {
-    if (config.DEV_MODE && !test.runInDev) continue;
-
-    const hasMatches = test.regex.test(newMessage.content);
-    test.regex.lastIndex = 0;
-
-    if (hasMatches) {
-      const oldMatches: RegExpExecArray[] = [];
-      const newMatches: RegExpExecArray[] = [];
-      let match: RegExpExecArray | null;
-
-      while ((match = test.regex.exec(newMessage.content)) != null) {
-        newMatches.push(match);
-      }
-      test.regex.lastIndex = 0;
-
-      while ((match = test.regex.exec(loggedMessage.content)) != null) {
-        oldMatches.push(match);
-      }
-      test.regex.lastIndex = 0;
-
-      const properMatches: RegExpExecArray[] = [];
-
-      for (const newMatch of newMatches) {
-        if (!oldMatches.find(m => m[1] == newMatch[1])) properMatches.push(newMatch);
-      }
-
-      if (properMatches.length == 0) continue;
-
-      const response = await test.handler(newMessage, properMatches.filter(uniqueRegexMatches));
-
-      if (response === false) return;
-
-      if (response !== true) responses.push(response as string);
-    }
-  }
-
-  if (responses.length > 0) {
-    await newMessage.reply(responses.join('\n'));
-  }
-}
-
-export async function handleMessageDelete(message: Message | PartialMessage) {
-  const loggedMessage = await Database.getMessageWithRetry(message.id);
-
-  if (!loggedMessage) return;
-  else await Database.removeMessge(message.id);
-
-  if (message.inGuild()) {
-    await logDeletion(loggedMessage, message);
-  }
-}
-
-export async function handleBulkMessageDelete(messages: ReadonlyCollection<string, Message | Partial>, channel: GuildTextBasedChannel) {
-  for (const message of messages.values()) {
-    await handleMessageDelete(message);
-  }
-}
+export const uniqueRegexMatches = (g, i, a) => a.findIndex(v => v[1] == g[1]) == i;
 
 async function searchHandler(message: Message, matchedGroups: RegExpExecArray[]): Promise<string | boolean> {
   const skip = await channelIgnoresLinks(message.channel as GuildBasedChannel);
@@ -226,7 +82,7 @@ async function wikiPageHandler(message: Message, matchedGroups: RegExpExecArray[
   return true;
 }
 
-async function blacklistIfNecessary(message: Message, posts: E621Post[]): Promise<boolean> {
+export async function blacklistIfNecessary(message: Message, posts: E621Post[]): Promise<boolean> {
   const blacklistedIds: number[] = [];
 
   const channel = await message.channel.fetch() as GuildTextBasedChannel;
