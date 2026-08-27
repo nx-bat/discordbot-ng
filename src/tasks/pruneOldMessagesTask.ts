@@ -1,13 +1,11 @@
-import { Task } from '../types';
+import { Client } from 'discord.js';
 import { Database } from '../shared/Database';
 
-class PruneOldMessagesTask implements Task {
-  interval: number = 3.6e6;
-  firstRun: boolean = true;
+export default {
+  interval: 3.6e6,
+  firstRun: true,
 
-  async handle(): Promise<void> {
+  handler: async (context: Client) => {
     await Database.pruneOldMessages();
   }
 }
-
-export default new PruneOldMessagesTask();

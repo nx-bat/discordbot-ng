@@ -1,14 +1,11 @@
 import { Client } from 'discord.js';
-import { Task } from '../types';
 import { closeOldTickets } from '../utils';
 
-class CloseStaleTicketsTask implements Task {
-  interval: number = 3.6e6;
-  firstRun: boolean = true;
+export default {
+  interval: 3.6e6,
+  firstRun: true,
 
-  async handle(context: Client): Promise<void> {
+  handler: async (context: Client) => {
     await closeOldTickets(context);
   }
 }
-
-export default new CloseStaleTicketsTask();

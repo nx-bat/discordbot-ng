@@ -140,8 +140,8 @@ client.on('clientReady', async () => {
   await initializeWebserver(client);
 
   tasks.forEach(async (task) => {
-    if (task.firstRun) await task.handle(client);
-    setInterval(async () => await task.handle(client), task.interval);
+    if (task.firstRun) await task.handler(client);
+    setInterval(async () => await task.handler(client), task.interval);
   });
 
   events.forEach(event =>
