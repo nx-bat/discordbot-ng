@@ -8,6 +8,7 @@ import { Handler } from './types';
 import { initIfNecessary, loadHandlersFrom, refreshCommands } from './utils';
 import { initializeWebserver } from './webserver';
 import { Encrypter } from './shared/Encrypter';
+import tasks from './tasks';
 
 
 let ready = false;
@@ -141,7 +142,10 @@ client.on('clientReady', async () => {
 
   await initializeWebserver(client);
 
-  ScheduledTasks.forEach(task => scheduler.add(task));
+  tasks.forEach(async (task) => {
+    if (task.firstRun) await task.handle(client);
+    setInterval(async () => await task.handle(client), task.interval);
+  });
 
   events.forEach(event =>
     client.on(event.event, (...args) =>
