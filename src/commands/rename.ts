@@ -1,5 +1,5 @@
-import { ApplicationIntegrationType, ChatInputCommandInteraction, Client, InteractionContextType, PermissionFlagsBits, RateLimitError, SlashCommandBuilder } from 'discord.js';
-import { msToHuman } from '../utils';
+import { ApplicationIntegrationType, ChatInputCommandInteraction, Client, InteractionContextType, MessageFlags, PermissionFlagsBits, RateLimitError, SlashCommandBuilder } from 'discord.js';
+import { CreateDefaultEmbed } from '../utils';
 import { Database } from '../shared/Database';
 
 export default {
@@ -15,28 +15,55 @@ export default {
         .setName('new-name')
         .setDescription('The new name of the general channel.')
         .setRequired(true)
+        .setMaxLength(100)
     ),
   handler: async function (client: Client, interaction: ChatInputCommandInteraction) {
     const settings = await Database.getOrCreateSettings(interaction.guildId!);
-    if (!settings.general_chat_id) return interaction.reply('No general chat id found.');
-
-    const name = interaction.options.getString('new-name', true);
-    if (name.length > 100) return interaction.reply('Name must be less than 100 characters in length.');
+    if (!settings.general_chat_id) {
+      return await interaction.reply({
+        content: 'The general channel has not been set up yet. Configure one with /settings, then try again.',
+        flags: [MessageFlags.Ephemeral]
+      });
+    }
 
     const channel = await interaction.guild!.channels.fetch(settings.general_chat_id)!;
-    if (!channel) return interaction.reply('No general chat id found.');
+    if (!channel) {
+      return await interaction.reply({
+        content: 'The general channel could not be found. It may have been deleted. Configure a new one with /settings, then try again.',
+        flags: [MessageFlags.Ephemeral]
+      });
+    }
 
     try {
-      await channel.setName(name);
+      await channel.setName(interaction.options.getString('new-name', true));
 
-      interaction.reply(`Renamed general to ${channel.name}`);
+      if (!channel.isTextBased() || !channel.isSendable()) return;
+      await channel.send({
+        embeds: [{
+          ...CreateDefaultEmbed(client),
+
+          author: {
+            name: interaction.user.username,
+            icon_url: interaction.user.displayAvatarURL(),
+          },
+
+          description: `*${interaction.user.username}* renamed the general channel to: **${channel.name}**.`,
+        }],
+      });
     } catch (e: any) {
       if (e instanceof RateLimitError) {
-        return interaction.reply(`Name change limited. Try again in ${msToHuman(e.retryAfter)}`);
+        return await interaction.reply({
+          content: 'The general channel was renamed too recently. Please wait a few seconds and try again.',
+          flags: [MessageFlags.Ephemeral]
+        });
       }
 
       console.error(e);
-      return interaction.reply('An error has occurred.');
+
+      return await interaction.reply({
+        content: 'An error occurred while renaming the general channel. Please try again later.',
+        flags: [MessageFlags.Ephemeral]
+      });
     }
-  }
+  },
 };
