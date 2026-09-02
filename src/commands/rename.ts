@@ -1,6 +1,6 @@
 import { ApplicationIntegrationType, ChatInputCommandInteraction, Client, InteractionContextType, MessageFlags, PermissionFlagsBits, RateLimitError, SlashCommandBuilder } from 'discord.js';
-import { CreateDefaultEmbed } from '../utils';
 import { Database } from '../shared/Database';
+import { CreateDefaultEmbed } from '../utils';
 
 export default {
   name: 'rename',
