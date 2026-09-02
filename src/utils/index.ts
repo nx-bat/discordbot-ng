@@ -20,6 +20,7 @@ export * from './message-matcher-regex';
 export * from './message-handler-utils';
 export * from './message-utils';
 export * from './modal-utils';
+export * from './moderation-utils';
 export * from './ms-to-human';
 export * from './name-sync';
 export * from './note-utils';

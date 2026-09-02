@@ -1,6 +1,6 @@
 import { ApplicationIntegrationType, ChatInputCommandInteraction, Client, Guild, GuildMember, InteractionContextType, PermissionFlagsBits, SlashCommandBuilder, time, TimestampStyles, User } from 'discord.js';
 import { Database } from '../shared/Database';
-import { AltData, comprehensiveAltLookupFromDiscord, deferInteraction, getIdFromInput } from '../utils';
+import { AltData, calculateDuration, comprehensiveAltLookupFromDiscord, deferInteraction, getIdFromInput, isDurationValid } from '../utils';
 
 export default {
   name: 'ban',
@@ -23,31 +23,17 @@ export default {
         .setRequired(false)
         .setMaxLength(400)
     )
-    .addNumberOption(option =>
+    .addStringOption(option =>
       option
-        .setName('hours')
-        .setDescription('The duration of the ban, added with other options (0 for permanent).')
+        .setName('duration')
+        .setDescription('The duration of the ban (e.g., 1d2h3m).')
         .setRequired(false)
     )
-    .addNumberOption(option =>
+    .addStringOption(option =>
       option
-        .setName('minutes')
-        .setDescription('The duration of the ban, added with other options (0 for permanent).')
+        .setName('cleanup')
+        .setDescription('Duration of messages to delete (e.g., 1d2h3m).')
         .setRequired(false)
-    )
-    .addNumberOption(option =>
-      option
-        .setName('seconds')
-        .setDescription('The duration of the ban, added with other options (0 for permanent).')
-        .setRequired(false)
-    )
-    .addNumberOption(option =>
-      option
-        .setName('delete-message-days')
-        .setDescription('How far back to delete messages (in days, default: 0 days).')
-        .setRequired(false)
-        .setMinValue(0)
-        .setMaxValue(7)
     )
     .addBooleanOption(option =>
       option
@@ -67,70 +53,66 @@ export default {
     const idToUse = getIdFromInput(input);
     const reason = interaction.options.getString('reason') ?? '';
 
-    const hours = (interaction.options.getNumber('hours') ?? 0) * 3.6e+6;
-    const minutes = (interaction.options.getNumber('minutes') ?? 0) * 60000;
-    const seconds = (interaction.options.getNumber('seconds') ?? 0) * 1000;
+    // Get and validate the duration and cleanup options
+    const durationString = interaction.options.getString('duration');
+    if (durationString && !isDurationValid(durationString)) return await interaction.editReply('Invalid duration format. Please use a valid format: 1d2h3m.');
+    const duration = calculateDuration(durationString ?? '0s');
 
-    const duration = hours + minutes + seconds;
-
-    const deleteMessageDays = (interaction.options.getNumber('delete-message-days') ?? 0) * 86400;
+    const cleanupString = interaction.options.getString('cleanup');
+    if (cleanupString && !isDurationValid(cleanupString)) return await interaction.editReply('Invalid cleanup duration format. Please use a valid format: 1d2h3m.');
+    const cleanup = cleanupString ? calculateDuration(cleanupString) / 1000 : 0;
 
     const fullBan = interaction.options.getBoolean('full-ban') ?? false;
 
-    let banMember: GuildMember | null = null;
+    let member: GuildMember | null = null;
 
     try {
-      banMember = await interaction.guild.members.fetch(idToUse);
+      member = await interaction.guild.members.fetch(idToUse);
+
+      const actor = await interaction.guild.members.fetch(interaction.user.id);
+      if (actor.roles.highest.comparePositionTo(member.roles.highest) <= 0)
+        return await interaction.editReply('You do not have permission to ban this user.');
+
+      if (!member.bannable)
+        return await interaction.editReply('I do not have permission to ban this user.');
     } catch (e) {
       // Member not in server.
     }
 
-    const member = await interaction.guild.members.fetch(interaction.user.id);
-
-    if (banMember && member.roles.highest.comparePositionTo(banMember.roles.highest) <= 0) {
-      return await interaction.editReply('You do not have permission to ban this user.');
-    }
-
-    if (banMember && !banMember.bannable) {
-      return await interaction.editReply('I do not have permission to ban this user.');
-    }
-
     const expiresAt = new Date(Date.now() + duration);
-
     await Database.putBan(idToUse, duration > 0 ? expiresAt : null, fullBan);
 
     try {
       await interaction.guild.bans.create(idToUse, {
         reason: (reason + ` ${fullBan ? 'Full banned' : 'Banned'} by ${interaction.user.username} (${interaction.user.id})${duration > 0 ? `. Expires at: ${time(expiresAt, TimestampStyles.ShortDateTime)}` : ''}`).trim(),
-        deleteMessageSeconds: deleteMessageDays
+        deleteMessageSeconds: cleanup
       });
     } catch (e) {
       console.error(e);
-      return await interaction.editReply("Error banning user (couldn't ban).");
+      return await interaction.editReply(`Failed to ban <@${idToUse}> (${idToUse}).`);
     }
 
     if (fullBan) {
       const alts = await comprehensiveAltLookupFromDiscord(idToUse, interaction.guild);
-
-      await removeAllAlts([alts], interaction.guild, interaction.user, fullBan, reason, deleteMessageDays, duration, expiresAt);
+      await removeAllAlts([alts], interaction.guild, interaction.user, fullBan, reason, duration, expiresAt);
     }
 
-    await interaction.editReply(`<@${idToUse}> (${idToUse}) has been ${fullBan ? 'full banned' : 'banned'}.`);
+    await interaction.editReply(`Successfully banned <@${idToUse}> (${idToUse})${duration > 0 ? `. Expires at: ${time(expiresAt, TimestampStyles.ShortDateTime)}` : ''}${fullBan ? ' and all known alts' : ''}.`);
   }
 };
 
-async function removeAllAlts(altData: AltData[], guild: Guild, moderator: User, fullBan: boolean, reason: string, deleteMessageDays: number, duration: number, expiresAt: Date) {
+async function removeAllAlts(altData: AltData[], guild: Guild, moderator: User, fullBan: boolean, reason: string, duration: number, expiresAt: Date) {
   for (const data of altData) {
     if (data.type == 'discord') {
       try {
         if (!data.banned) {
-          await guild.members.kick(data.thisId as string, (reason + ` ${fullBan ? 'Full banned' : 'Banned'} by ${moderator.username} (${moderator.id})${duration > 0 ? `. Expires at: ${time(expiresAt, TimestampStyles.ShortDateTime)}` : ''}`).trim());
+          await guild.members.kick(data.thisId as string, (reason + ` ${fullBan ? 'Full banned' : 'Banned'} by ${moderator.username} (${moderator.id})${duration > 0 ? `. Expires at: ${time(expiresAt, TimestampStyles.ShortDateShortTime)}` : ''}`).trim());
         }
       } catch (e) {
         console.error(e);
       }
     }
 
-    await removeAllAlts(data.alts, guild, moderator, fullBan, reason, deleteMessageDays, duration, expiresAt);
+    await removeAllAlts(data.alts, guild, moderator, fullBan, reason, duration, expiresAt);
   }
 }
