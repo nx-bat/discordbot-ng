@@ -6,7 +6,7 @@ const task: Task = {
   id: 'closeStaleTickets',
   interval: 3.6e6,
   firstRun: true,
-  
+
   handle: async (context: Client) => {
     await closeOldTickets(context);
   },
