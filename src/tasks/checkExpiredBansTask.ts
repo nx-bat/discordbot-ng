@@ -1,8 +1,9 @@
 import { Client } from 'discord.js';
-import { checkExpiredBans } from '../utils';
 import { Task } from '../types';
+import { checkExpiredBans } from '../utils';
 
 const task: Task = {
+  id: 'checkExpiredBans',
   interval: 300000,
   firstRun: true,
   

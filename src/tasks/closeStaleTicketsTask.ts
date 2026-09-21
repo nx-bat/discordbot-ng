@@ -1,8 +1,9 @@
 import { Client } from 'discord.js';
-import { closeOldTickets } from '../utils';
 import { Task } from '../types';
+import { closeOldTickets } from '../utils';
 
 const task: Task = {
+  id: 'closeStaleTickets',
   interval: 3.6e6,
   firstRun: true,
   

@@ -139,9 +139,14 @@ client.on('clientReady', async () => {
 
   await initializeWebserver(client);
 
-  tasks.forEach(async (task) => {
-    if (task.firstRun) await task.handle(client);
-    setInterval(async () => await task.handle(client).catch((error) => console.log(error)), task.interval);
+  tasks.forEach((task) => {
+    const handler = () => {
+      Promise.resolve(task.handle(client))
+        .catch(e => console.error(`Error in '${task.id}' task:`, e));
+    };
+
+    if (task.firstRun) handler();
+    setInterval(handler, task.interval);
   });
 
   events.forEach(event =>

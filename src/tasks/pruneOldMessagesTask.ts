@@ -3,6 +3,7 @@ import { Database } from '../shared/Database';
 import { Task } from '../types';
 
 const task: Task = {
+  id: 'pruneOldMessages',
   interval: 3.6e6,
   firstRun: true,
   
