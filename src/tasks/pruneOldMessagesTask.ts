@@ -1,11 +1,14 @@
 import { Client } from 'discord.js';
 import { Database } from '../shared/Database';
+import { Task } from '../types';
 
-export default {
+const task: Task = {
   interval: 3.6e6,
   firstRun: true,
-
-  handler: async (context: Client) => {
+  
+  handle: async (context: Client) => {
     await Database.pruneOldMessages();
   },
-};
+}
+
+export default task;

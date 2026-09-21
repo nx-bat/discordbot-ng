@@ -1,11 +1,14 @@
 import { Client } from 'discord.js';
 import { closeOldTickets } from '../utils';
+import { Task } from '../types';
 
-export default {
+const task: Task = {
   interval: 3.6e6,
   firstRun: true,
-
-  handler: async (context: Client) => {
+  
+  handle: async (context: Client) => {
     await closeOldTickets(context);
   },
 };
+
+export default task;
