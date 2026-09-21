@@ -1,7 +1,7 @@
 import { APIEmbed, Client } from 'discord.js';
 
-type EmbedSeverity =
-  | 'info'
+type EmbedSeverity
+  = | 'info'
   | 'warning'
   | 'error'
   | 'success'
