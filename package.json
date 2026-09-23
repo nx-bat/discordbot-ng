@@ -27,13 +27,13 @@
   },
   "scripts": {
     "dev": "tsx watch --enable-source-maps --env-file=.env src/index.ts",
-    "start": "node --env-file-if-exists=.env dist/index.js",
+    "start": "node --env-file=.env dist/index.js",
     "lint": "npx eslint .",
     "typecheck": "npx tsc --noEmit",
     "build": "npm run clean && node scripts/build.js && npm run copyfiles",
     "clean": "rimraf dist",
     "copyfiles": "copyfiles -u 1 \"./src/**/*.html\" ./dist",
-    "encrypt": "node ./scripts/encrypt-data.js",
-    "add-author-hash": "node ./scripts/add-author-id-hash.js"
+    "encrypt": "node --env-file=.env ./scripts/encrypt-data.js",
+    "add-author-hash": "node --env-file=.env ./scripts/add-author-id-hash.js"
   }
 }
